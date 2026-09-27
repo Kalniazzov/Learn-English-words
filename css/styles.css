@@ -534,6 +534,7 @@ a:focus-visible {
 }
 
 .swipe-hint {
+    display: none;
     margin: 10px 0 0;
     color: #899289;
     font: 9px var(--mono);
@@ -716,16 +717,17 @@ kbd {
 
 .library-heading h1 {
     margin: 15px 0 8px;
-    font: 500 44px/1.12 var(--serif);
+    display: none;
+    color: #899289;
 }
 
 .library-heading h1 em {
-    color: var(--coral);
+    display: block;
     font-weight: 500;
 }
 
 .library-description {
-    margin: 0;
+    display: none;
     color: #78827a;
     font-size: 13px;
 }
@@ -1089,6 +1091,7 @@ kbd {
     }
 
     .swipe-hint {
+        display: block;
         line-height: 1.7;
     }
 
@@ -1097,6 +1100,7 @@ kbd {
     }
 
     .keyboard-hint {
+        display: none;
         font-size: 9px;
     }
 
