@@ -533,6 +533,22 @@ a:focus-visible {
     font-size: 10px;
 }
 
+.swipe-hint {
+    margin: 10px 0 0;
+    color: #899289;
+    font: 9px var(--mono);
+    text-align: center;
+}
+
+.swipe-hint span {
+    margin-left: 8px;
+    color: var(--coral);
+}
+
+.swipe-hint span:first-child {
+    margin-left: 0;
+}
+
 kbd {
     padding: 3px 5px;
     border: 1px solid #d8dacf;
@@ -579,6 +595,18 @@ kbd {
     margin: 9px 0 19px;
     color: #7e877f;
     font-size: 12px;
+}
+
+.repeat-copy {
+    margin: -10px 0 18px;
+    color: #8a938a;
+    font-size: 11px;
+}
+
+.repeat-copy strong {
+    color: var(--coral);
+    font-family: var(--mono);
+    font-weight: 500;
 }
 
 .progress-track {
@@ -1047,17 +1075,21 @@ kbd {
     }
 
     .flashcard {
-        min-height: 292px;
+        min-height: 380px;
         padding: 20px;
     }
 
     .flashcard-inner,
     .flashcard-face {
-        min-height: 252px;
+        min-height: 340px;
     }
 
     .word-text {
         font-size: 36px;
+    }
+
+    .swipe-hint {
+        line-height: 1.7;
     }
 
     .navigation-row {

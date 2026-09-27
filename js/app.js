@@ -1,6 +1,7 @@
 const { categories, getCategoryWords, parseCsv } = window.WordData;
 const STORAGE_KEY = 'slovar-learned-words';
 const TODAY_KEY = 'slovar-daily-progress';
+const REPEAT_KEY = 'slovar-repeat-words';
 const elements = {
     categoryView: document.querySelector('#category-view'),
     studyView: document.querySelector('#study-view'),
@@ -27,6 +28,7 @@ const elements = {
     progressTotal: document.querySelector('#progress-total'),
     learnedCount: document.querySelector('#learned-count'),
     progressPercent: document.querySelector('#progress-percent'),
+    repeatCount: document.querySelector('#repeat-count'),
     progressBar: document.querySelector('#progress-bar'),
     progressFill: document.querySelector('#progress-fill'),
     todayCount: document.querySelector('#today-count'),
@@ -51,6 +53,7 @@ let audioPlayer = null;
 let touchStart = null;
 let suppressCardClickUntil = 0;
 let learned = new Set(readStoredArray(STORAGE_KEY));
+let repeatWords = new Set(readStoredArray(REPEAT_KEY));
 let dailyProgress = readDailyProgress();
 
 function selectEnglishVoice() {
@@ -87,6 +90,7 @@ function formatNumber(number) {
 function saveProgress() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...learned]));
     localStorage.setItem(TODAY_KEY, JSON.stringify(dailyProgress));
+    localStorage.setItem(REPEAT_KEY, JSON.stringify([...repeatWords]));
 }
 
 function renderProgress() {
@@ -100,6 +104,7 @@ function renderProgress() {
     elements.learnedCount.textContent = count.toLocaleString('ru-RU');
     elements.progressTotal.textContent = String(total);
     elements.progressPercent.textContent = `${percent}%`;
+    elements.repeatCount.textContent = String(activeWords.filter(word => repeatWords.has(word.id)).length);
     elements.progressFill.style.width = `${percent}%`;
     elements.progressBar.setAttribute('aria-valuemax', String(total));
     elements.progressBar.setAttribute('aria-valuenow', String(count));
@@ -215,11 +220,21 @@ function moveBy(amount) {
 
 function markKnown() {
     const word = activeWords[index];
+    repeatWords.delete(word.id);
     if (!learned.has(word.id)) {
         learned.add(word.id);
         dailyProgress.count += 1;
-        saveProgress();
     }
+    saveProgress();
+    moveBy(1);
+    renderCategories();
+}
+
+function markUnknown() {
+    const word = activeWords[index];
+    learned.delete(word.id);
+    repeatWords.add(word.id);
+    saveProgress();
     moveBy(1);
     renderCategories();
 }
@@ -258,6 +273,7 @@ function speakEnglish() {
     if (!activeWords.length) return;
     const word = activeWords[index];
     const spokenText = word.english.replace(/\s*\/\s*/g, ', ').replace(/[()]/g, '');
+    if (speakWithBrowserVoice(spokenText)) return;
     if (audioPlayer) {
         audioPlayer.pause();
         audioPlayer.currentTime = 0;
@@ -268,7 +284,7 @@ function speakEnglish() {
 }
 
 function speakWithBrowserVoice(spokenText) {
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window)) return false;
     const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.lang = 'en-US';
     utterance.rate = 0.82;
@@ -277,7 +293,9 @@ function speakWithBrowserVoice(spokenText) {
     selectEnglishVoice();
     utterance.voice = englishVoice;
     window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
     window.speechSynthesis.speak(utterance);
+    return true;
 }
 
 function handleCardTouchEnd(event) {
@@ -295,7 +313,7 @@ function handleCardTouchEnd(event) {
     }
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
         if (deltaX > 0) markKnown();
-        else moveBy(1);
+        else markUnknown();
     } else if (deltaY < 0) {
         moveBy(1);
     } else {
@@ -319,6 +337,11 @@ elements.flashcard.addEventListener('click', event => {
     if (Date.now() < suppressCardClickUntil) return;
     if (!event.target.closest('button')) toggleCard();
 });
+document.querySelectorAll('.sound-button').forEach(button => {
+    button.addEventListener('click', event => event.stopPropagation());
+});
+document.querySelector('#speak-button').addEventListener('pointerdown', event => event.stopPropagation());
+document.querySelector('#speak-button-back').addEventListener('pointerdown', event => event.stopPropagation());
 elements.flashcard.addEventListener('touchstart', event => {
     if (event.touches.length === 1) touchStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
 }, { passive: true });
@@ -337,6 +360,7 @@ document.querySelector('#speak-button-back').addEventListener('click', speakEngl
 document.querySelector('#reset-progress').addEventListener('click', () => {
     if (!window.confirm('Сбросить весь прогресс изучения?')) return;
     learned.clear();
+    repeatWords.clear();
     dailyProgress = { date: new Date().toLocaleDateString('en-CA'), count: 0 };
     saveProgress();
     renderProgress();
