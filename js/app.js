@@ -14,6 +14,10 @@ const elements = {
     wordText: document.querySelector('#word-text'),
     pronunciation: document.querySelector('#pronunciation'),
     wordHint: document.querySelector('#word-hint'),
+    answerText: document.querySelector('#answer-text'),
+    answerPronunciation: document.querySelector('#answer-pronunciation'),
+    answerHint: document.querySelector('#answer-hint'),
+    backWordNumber: document.querySelector('#back-word-number'),
     promptLabel: document.querySelector('#prompt-label'),
     wordNumber: document.querySelector('#word-number'),
     cardIndex: document.querySelector('#card-index'),
@@ -30,6 +34,7 @@ const elements = {
     revealButton: document.querySelector('#reveal-button'),
     answerActions: document.querySelector('#answer-actions'),
     speakButton: document.querySelector('#speak-button'),
+    speakButtonBack: document.querySelector('#speak-button-back'),
     loadStatus: document.querySelector('#load-status'),
     flashcard: document.querySelector('#flashcard')
 };
@@ -42,6 +47,9 @@ let revealed = false;
 let englishFirst = true;
 let translationLanguage = 'russian';
 let englishVoice = null;
+let audioPlayer = null;
+let touchStart = null;
+let suppressCardClickUntil = 0;
 let learned = new Set(readStoredArray(STORAGE_KEY));
 let dailyProgress = readDailyProgress();
 
@@ -174,17 +182,24 @@ function renderCard() {
     const prompt = englishFirst ? word.english : translation;
     const answer = englishFirst ? translation : word.english;
     const pronunciation = window.WordPronunciations?.[word.id] || '';
-    elements.wordText.textContent = revealed ? answer : prompt;
+    elements.wordText.textContent = prompt;
     elements.pronunciation.textContent = pronunciation ? `/${pronunciation}/` : '';
     elements.pronunciation.hidden = !pronunciation;
-    elements.wordHint.textContent = revealed ? (englishFirst ? `Перевод на ${languageLabel}` : 'Перевод на английский') : 'Вспомни перевод и открой ответ';
-    elements.promptLabel.textContent = revealed ? 'ПЕРЕВОД' : (englishFirst ? 'АНГЛИЙСКОЕ СЛОВО' : `${translationLanguage === 'kazakh' ? 'КАЗАХСКОЕ' : 'РУССКОЕ'} СЛОВО`);
+    elements.wordHint.textContent = 'Вспомни перевод и открой ответ';
+    elements.promptLabel.textContent = englishFirst ? 'АНГЛИЙСКОЕ СЛОВО' : `${translationLanguage === 'kazakh' ? 'КАЗАХСКОЕ' : 'РУССКОЕ'} СЛОВО`;
+    elements.answerText.textContent = answer;
+    elements.answerPronunciation.textContent = pronunciation ? `/${pronunciation}/` : '';
+    elements.answerPronunciation.hidden = !pronunciation;
+    elements.answerHint.textContent = englishFirst ? `Перевод на ${languageLabel}` : 'Перевод на английский';
+    elements.backWordNumber.textContent = `№ ${formatNumber(Number(word.id))}`;
     elements.wordNumber.textContent = `№ ${formatNumber(Number(word.id))}`;
     elements.cardIndex.textContent = String(index + 1);
     elements.currentNumber.textContent = formatNumber(index + 1);
     elements.totalNumber.textContent = String(activeWords.length).padStart(3, '0');
     elements.revealButton.hidden = revealed;
     elements.answerActions.hidden = !revealed;
+    elements.flashcard.classList.toggle('is-flipped', revealed);
+    elements.flashcard.setAttribute('aria-label', revealed ? 'Карточка с ответом' : 'Карточка со словом');
     elements.flashcard.classList.remove('card-refresh');
     void elements.flashcard.offsetWidth;
     elements.flashcard.classList.add('card-refresh');
@@ -233,9 +248,63 @@ function setTranslationLanguage(language) {
     renderCard();
 }
 
-document.querySelector('#reveal-button').addEventListener('click', () => {
-    revealed = true;
+function toggleCard() {
+    if (!activeWords.length) return;
+    revealed = !revealed;
     renderCard();
+}
+
+function speakEnglish() {
+    if (!activeWords.length) return;
+    const word = activeWords[index];
+    const spokenText = word.english.replace(/\s*\/\s*/g, ', ').replace(/[()]/g, '');
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+    }
+    audioPlayer = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q=${encodeURIComponent(spokenText)}`);
+    audioPlayer.addEventListener('error', () => speakWithBrowserVoice(spokenText), { once: true });
+    audioPlayer.play().catch(() => speakWithBrowserVoice(spokenText));
+}
+
+function speakWithBrowserVoice(spokenText) {
+    if (!('speechSynthesis' in window)) return;
+    const utterance = new SpeechSynthesisUtterance(spokenText);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.82;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    selectEnglishVoice();
+    utterance.voice = englishVoice;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+}
+
+function handleCardTouchEnd(event) {
+    if (!touchStart || event.target.closest('button')) {
+        touchStart = null;
+        return;
+    }
+    const deltaX = event.changedTouches[0].clientX - touchStart.x;
+    const deltaY = event.changedTouches[0].clientY - touchStart.y;
+    touchStart = null;
+    suppressCardClickUntil = Date.now() + 500;
+    if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 45) {
+        toggleCard();
+        return;
+    }
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX > 0) markKnown();
+        else moveBy(1);
+    } else if (deltaY < 0) {
+        moveBy(1);
+    } else {
+        moveBy(-1);
+    }
+}
+
+document.querySelector('#reveal-button').addEventListener('click', () => {
+    if (!revealed) toggleCard();
 });
 document.querySelector('#back-to-categories').addEventListener('click', showCategories);
 document.querySelector('#known-button').addEventListener('click', markKnown);
@@ -246,6 +315,14 @@ document.querySelector('#english-to-russian').addEventListener('click', () => se
 document.querySelector('#russian-to-english').addEventListener('click', () => setDirection(false));
 document.querySelector('#language-russian').addEventListener('click', () => setTranslationLanguage('russian'));
 document.querySelector('#language-kazakh').addEventListener('click', () => setTranslationLanguage('kazakh'));
+elements.flashcard.addEventListener('click', event => {
+    if (Date.now() < suppressCardClickUntil) return;
+    if (!event.target.closest('button')) toggleCard();
+});
+elements.flashcard.addEventListener('touchstart', event => {
+    if (event.touches.length === 1) touchStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+}, { passive: true });
+elements.flashcard.addEventListener('touchend', handleCardTouchEnd, { passive: true });
 document.querySelector('#shuffle-button').addEventListener('click', () => {
     for (let position = activeWords.length - 1; position > 0; position -= 1) {
         const other = Math.floor(Math.random() * (position + 1));
@@ -255,20 +332,8 @@ document.querySelector('#shuffle-button').addEventListener('click', () => {
     revealed = false;
     renderCard();
 });
-document.querySelector('#speak-button').addEventListener('click', () => {
-    if (!activeWords.length || !('speechSynthesis' in window)) return;
-    const word = activeWords[index];
-    const spokenText = word.english.replace(/\s*\/\s*/g, ', ').replace(/[()]/g, '');
-    const utterance = new SpeechSynthesisUtterance(spokenText);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.82;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    selectEnglishVoice();
-    utterance.voice = englishVoice;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-});
+document.querySelector('#speak-button').addEventListener('click', speakEnglish);
+document.querySelector('#speak-button-back').addEventListener('click', speakEnglish);
 document.querySelector('#reset-progress').addEventListener('click', () => {
     if (!window.confirm('Сбросить весь прогресс изучения?')) return;
     learned.clear();
@@ -303,7 +368,8 @@ async function loadWords() {
         elements.deckTotal.textContent = total;
         renderCategories();
         renderProgress();
-        elements.speakButton.disabled = !('speechSynthesis' in window);
+        elements.speakButton.disabled = false;
+        elements.speakButtonBack.disabled = false;
         elements.revealButton.disabled = false;
         elements.loadStatus.textContent = `Загружено ${total} слов`;
     } catch (error) {

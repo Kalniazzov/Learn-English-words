@@ -84,23 +84,45 @@
                             Перемешать</button>
                     </div>
 
-                    <article class="flashcard" id="flashcard" aria-live="polite">
-                        <div class="card-topline">
-                            <span class="card-label" id="prompt-label">АНГЛИЙСКОЕ СЛОВО</span>
-                            <span class="card-number" id="word-number">№ 001</span>
-                        </div>
-                        <div class="card-content">
-                            <p class="word-text" id="word-text">Загружаем слова…</p>
-                            <p class="pronunciation" id="pronunciation" aria-label="Произношение"></p>
-                            <p class="word-hint" id="word-hint">Вспомни перевод и открой ответ</p>
-                        </div>
-                        <div class="card-bottomline">
-                            <span class="card-caption">КАРТОЧКА <span aria-hidden="true">✳</span> <span
-                                    id="card-index">1</span></span>
-                            <button class="sound-button" id="speak-button" type="button" title="Произнести слово"
-                                aria-label="Произнести слово" disabled>
-                                <span aria-hidden="true">♫</span>
-                            </button>
+                    <article class="flashcard" id="flashcard" aria-live="polite" aria-label="Карточка слова">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-face flashcard-front">
+                                <div class="card-topline">
+                                    <span class="card-label" id="prompt-label">АНГЛИЙСКОЕ СЛОВО</span>
+                                    <span class="card-number" id="word-number">№ 001</span>
+                                </div>
+                                <div class="card-content">
+                                    <p class="word-text" id="word-text">Загружаем слова…</p>
+                                    <p class="pronunciation" id="pronunciation" aria-label="Произношение"></p>
+                                    <p class="word-hint" id="word-hint">Вспомни перевод и открой ответ</p>
+                                </div>
+                                <div class="card-bottomline">
+                                    <span class="card-caption">КАРТОЧКА <span aria-hidden="true">✳</span> <span
+                                            id="card-index">1</span></span>
+                                    <button class="sound-button" id="speak-button" type="button"
+                                        title="Произнести слово" aria-label="Произнести слово" disabled>
+                                        <span aria-hidden="true">♫</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flashcard-face flashcard-back" aria-hidden="true">
+                                <div class="card-topline">
+                                    <span class="card-label">ОТВЕТ</span>
+                                    <span class="card-number" id="back-word-number">№ 001</span>
+                                </div>
+                                <div class="card-content">
+                                    <p class="word-text" id="answer-text"></p>
+                                    <p class="pronunciation" id="answer-pronunciation" aria-label="Произношение"></p>
+                                    <p class="word-hint" id="answer-hint">Перевод на русский</p>
+                                </div>
+                                <div class="card-bottomline">
+                                    <span class="card-caption">ОТВЕТ <span aria-hidden="true">✳</span></span>
+                                    <button class="sound-button" id="speak-button-back" type="button"
+                                        title="Произнести слово" aria-label="Произнести слово" disabled>
+                                        <span aria-hidden="true">♫</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </article>
 
