@@ -12,6 +12,7 @@ const elements = {
     categoryTitle: document.querySelector('#category-title'),
     categoryDescription: document.querySelector('#category-description'),
     wordText: document.querySelector('#word-text'),
+    pronunciation: document.querySelector('#pronunciation'),
     wordHint: document.querySelector('#word-hint'),
     promptLabel: document.querySelector('#prompt-label'),
     wordNumber: document.querySelector('#word-number'),
@@ -40,8 +41,18 @@ let index = 0;
 let revealed = false;
 let englishFirst = true;
 let translationLanguage = 'russian';
+let englishVoice = null;
 let learned = new Set(readStoredArray(STORAGE_KEY));
 let dailyProgress = readDailyProgress();
+
+function selectEnglishVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    englishVoice = voices.find(voice => voice.name === 'Samantha' && voice.lang === 'en-US')
+        || voices.find(voice => voice.lang === 'en-US')
+        || voices.find(voice => voice.lang.startsWith('en'))
+        || null;
+}
 
 function readStoredArray(key) {
     try {
@@ -162,7 +173,10 @@ function renderCard() {
     const languageLabel = translationLanguage === 'kazakh' ? 'казахский' : 'русский';
     const prompt = englishFirst ? word.english : translation;
     const answer = englishFirst ? translation : word.english;
+    const pronunciation = window.WordPronunciations?.[word.id] || '';
     elements.wordText.textContent = revealed ? answer : prompt;
+    elements.pronunciation.textContent = pronunciation ? `/${pronunciation}/` : '';
+    elements.pronunciation.hidden = !pronunciation;
     elements.wordHint.textContent = revealed ? (englishFirst ? `Перевод на ${languageLabel}` : 'Перевод на английский') : 'Вспомни перевод и открой ответ';
     elements.promptLabel.textContent = revealed ? 'ПЕРЕВОД' : (englishFirst ? 'АНГЛИЙСКОЕ СЛОВО' : `${translationLanguage === 'kazakh' ? 'КАЗАХСКОЕ' : 'РУССКОЕ'} СЛОВО`);
     elements.wordNumber.textContent = `№ ${formatNumber(Number(word.id))}`;
@@ -243,8 +257,15 @@ document.querySelector('#shuffle-button').addEventListener('click', () => {
 });
 document.querySelector('#speak-button').addEventListener('click', () => {
     if (!activeWords.length || !('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(activeWords[index].english);
+    const word = activeWords[index];
+    const spokenText = word.english.replace(/\s*\/\s*/g, ', ').replace(/[()]/g, '');
+    const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.lang = 'en-US';
+    utterance.rate = 0.82;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    selectEnglishVoice();
+    utterance.voice = englishVoice;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
 });
@@ -294,4 +315,8 @@ async function loadWords() {
 }
 
 renderProgress();
+if ('speechSynthesis' in window) {
+    selectEnglishVoice();
+    window.speechSynthesis.addEventListener('voiceschanged', selectEnglishVoice);
+}
 loadWords();

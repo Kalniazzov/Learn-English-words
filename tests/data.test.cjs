@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const vm = require('node:vm');
 const { categories, getCategoryWords, parseCsv } = require('../js/data.js');
 
 const dictionaryPath = path.join(__dirname, '..', 'data', '1000_english_words_with_kazakh.csv');
@@ -62,4 +63,14 @@ test('category selection respects its inclusive id range', () => {
     assert.equal(selected.length, 100);
     assert.equal(selected[0].id, '751');
     assert.equal(selected.at(-1).id, '850');
+});
+
+test('every dictionary entry has a local pronunciation', () => {
+    const pronunciations = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'pronunciations.js'), 'utf8'), {
+        window: pronunciations
+    });
+
+    assert.equal(Object.keys(pronunciations.WordPronunciations).length, 1000);
+    assert.ok(Object.values(pronunciations.WordPronunciations).every(value => value.trim()));
 });
