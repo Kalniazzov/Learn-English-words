@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f1e8">
+    <title>Словарь — английские карточки</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/data.js" defer></script>
+    <script src="js/app.js" defer></script>
+</head>
+
+<body>
+    <div class="page-shell">
+        <header class="topbar">
+            <a class="brand" href="main.html" aria-label="Словарь, на главную">
+                <span class="brand-mark" aria-hidden="true">A<span>я</span></span>
+                <span class="brand-name">словарь<span class="brand-dot">.</span></span>
+            </a>
+            <div class="topbar-note"><span class="live-dot"></span> слова по темам</div>
+            <button class="icon-button reset-button" id="reset-progress" type="button" title="Сбросить прогресс"
+                aria-label="Сбросить прогресс">
+                <span aria-hidden="true">↺</span>
+            </button>
+        </header>
+
+        <main class="app-main">
+            <section class="category-view" id="category-view" aria-labelledby="page-title">
+                <div class="library-heading">
+                    <div>
+                        <p class="eyebrow">АНГЛИЙСКИЙ · <span id="deck-total">1000</span> СЛОВ</p>
+                        <h1 id="page-title">Слова по <em>темам.</em></h1>
+                        <p class="library-description">Выбери раздел и учи слова небольшими порциями.</p>
+                    </div>
+                    <div class="library-progress" aria-label="Общий прогресс">
+                        <div class="library-progress-heading"><span>Выучено</span><strong><span
+                                    id="library-learned">0</span><small> / 1000</small></strong></div>
+                        <div class="progress-track"><span id="library-progress-fill"></span></div>
+                        <span class="library-progress-percent" id="library-progress-percent">0%</span>
+                    </div>
+                </div>
+                <div class="category-heading">
+                    <h2>Категории</h2>
+                    <span id="category-count">16 разделов</span>
+                </div>
+                <div class="category-grid" id="category-grid" aria-label="Категории слов"></div>
+            </section>
+
+            <section class="study-view study-layout" id="study-view" aria-labelledby="category-title" hidden>
+                <section class="study-column">
+                    <div class="study-heading">
+                        <button class="back-button" id="back-to-categories" type="button"><span
+                                aria-hidden="true">←</span> Все категории</button>
+                        <div class="study-title-row">
+                            <div>
+                                <p class="eyebrow" id="category-description">ТЕМАТИЧЕСКИЙ РАЗДЕЛ</p>
+                                <h1 id="category-title"></h1>
+                            </div>
+                            <div class="study-controls">
+                                <div class="language-control" role="group" aria-label="Язык перевода">
+                                    <button class="language-option is-active" id="language-russian" type="button"
+                                        aria-pressed="true">RU</button>
+                                    <button class="language-option" id="language-kazakh" type="button"
+                                        aria-pressed="false">ҚАЗ</button>
+                                </div>
+                                <div class="direction-control" role="group" aria-label="Направление перевода">
+                                    <button class="direction-option is-active" id="english-to-russian" type="button"
+                                        aria-pressed="true">EN <span>→</span> <span
+                                            data-translation-label>RU</span></button>
+                                    <button class="direction-option" id="russian-to-english" type="button"
+                                        aria-pressed="false"><span data-translation-label>RU</span> <span>→</span>
+                                        EN</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="deck-toolbar">
+                        <div class="deck-position"><span class="position-number" id="current-number">001</span><span
+                                class="position-divider">/</span><span id="total-number">000</span></div>
+                        <button class="text-button" id="shuffle-button" type="button"><span aria-hidden="true">⤨</span>
+                            Перемешать</button>
+                    </div>
+
+                    <article class="flashcard" id="flashcard" aria-live="polite">
+                        <div class="card-topline">
+                            <span class="card-label" id="prompt-label">АНГЛИЙСКОЕ СЛОВО</span>
+                            <span class="card-number" id="word-number">№ 001</span>
+                        </div>
+                        <div class="card-content">
+                            <p class="word-text" id="word-text">Загружаем слова…</p>
+                            <p class="word-hint" id="word-hint">Вспомни перевод и открой ответ</p>
+                        </div>
+                        <div class="card-bottomline">
+                            <span class="card-caption">КАРТОЧКА <span aria-hidden="true">✳</span> <span
+                                    id="card-index">1</span></span>
+                            <button class="sound-button" id="speak-button" type="button" title="Произнести слово"
+                                aria-label="Произнести слово" disabled>
+                                <span aria-hidden="true">♫</span>
+                            </button>
+                        </div>
+                    </article>
+
+                    <div class="answer-area">
+                        <button class="reveal-button" id="reveal-button" type="button" disabled>
+                            <span>Показать перевод</span><span class="reveal-arrow" aria-hidden="true">↓</span>
+                        </button>
+                        <div class="answer-actions" id="answer-actions" hidden>
+                            <button class="again-button" id="again-button" type="button"><span
+                                    aria-hidden="true">↻</span> Повторить</button>
+                            <button class="known-button" id="known-button" type="button">Знаю <span
+                                    aria-hidden="true">→</span></button>
+                        </div>
+                        <div class="navigation-row">
+                            <button class="nav-button" id="previous-button" type="button" aria-label="Предыдущее слово"
+                                title="Предыдущее слово (←)">←</button>
+                            <span class="keyboard-hint"><kbd>ПРОБЕЛ</kbd> открыть <span class="hint-separator">·</span>
+                                <kbd>→</kbd> дальше</span>
+                            <button class="nav-button" id="next-button" type="button" aria-label="Следующее слово"
+                                title="Следующее слово (→)">→</button>
+                        </div>
+                    </div>
+                </section>
+
+                <aside class="progress-panel" aria-label="Прогресс изучения категории">
+                    <div class="panel-heading"><span class="eyebrow">ПРОГРЕСС РАЗДЕЛА</span><span class="progress-spark"
+                            aria-hidden="true">✳</span></div>
+                    <div class="progress-score"><span id="learned-count">0</span><span class="score-total">/ <span
+                                id="progress-total">0</span></span></div>
+                    <p class="progress-copy">слов выучено в разделе</p>
+                    <div class="progress-track" role="progressbar" aria-label="Выученные слова в категории"
+                        aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" id="progress-bar"><span
+                            id="progress-fill"></span></div>
+                    <div class="progress-meta"><span>Выучено</span><span id="progress-percent">0%</span></div>
+                    <div class="panel-rule"></div>
+                    <p class="daily-label">СЕГОДНЯ</p>
+                    <div class="today-row"><span class="today-icon" aria-hidden="true">↗</span><span><strong
+                                id="today-count">0</strong> <span id="today-word">слов</span></span></div>
+                    <p class="today-note">Продолжай в своём темпе</p>
+                </aside>
+            </section>
+        </main>
+        <footer class="page-footer"><span>ОДНО СЛОВО ЗА РАЗ</span><span id="load-status">Подключаем словарь…</span>
+        </footer>
+    </div>
+</body>
+
+</html>
