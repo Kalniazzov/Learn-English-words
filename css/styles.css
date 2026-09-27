@@ -505,15 +505,20 @@ a:focus-visible {
 
 .navigation-row {
     display: grid;
-    grid-template-columns: 38px 1fr 38px;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     justify-items: center;
     margin-top: 18px;
 }
 
 .nav-button {
-    width: 34px;
+    min-width: 34px;
     height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 8px;
     border: 1px solid #d9dbd2;
     border-radius: 3px;
     color: #5c6b62;
@@ -521,6 +526,10 @@ a:focus-visible {
     font-size: 17px;
     cursor: pointer;
     transition: color .2s, border-color .2s;
+}
+
+.nav-label {
+    font-size: 10px;
 }
 
 .nav-button:hover {

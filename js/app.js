@@ -273,14 +273,21 @@ function speakEnglish() {
     if (!activeWords.length) return;
     const word = activeWords[index];
     const spokenText = word.english.replace(/\s*\/\s*/g, ', ').replace(/[()]/g, '');
-    if (speakWithBrowserVoice(spokenText)) return;
     if (audioPlayer) {
         audioPlayer.pause();
         audioPlayer.currentTime = 0;
     }
     audioPlayer = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q=${encodeURIComponent(spokenText)}`);
-    audioPlayer.addEventListener('error', () => speakWithBrowserVoice(spokenText), { once: true });
-    audioPlayer.play().catch(() => speakWithBrowserVoice(spokenText));
+    audioPlayer.preload = 'auto';
+    audioPlayer.volume = 1;
+    let fallbackStarted = false;
+    const fallback = () => {
+        if (fallbackStarted) return;
+        fallbackStarted = true;
+        speakWithBrowserVoice(spokenText);
+    };
+    audioPlayer.addEventListener('error', fallback, { once: true });
+    audioPlayer.play().catch(fallback);
 }
 
 function speakWithBrowserVoice(spokenText) {
@@ -312,7 +319,7 @@ function handleCardTouchEnd(event) {
         return;
     }
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > 0) markKnown();
+        if (deltaX < 0) markKnown();
         else markUnknown();
     } else if (deltaY < 0) {
         moveBy(1);
